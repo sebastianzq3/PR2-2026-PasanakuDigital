@@ -1,0 +1,6 @@
+@PasanakuASPNET_HostAddress = http://localhost:5200
+
+GET {{PasanakuASPNET_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
