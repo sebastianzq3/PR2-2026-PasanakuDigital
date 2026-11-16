@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasanaku Digital | Ahorro Rotativo Bolivia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Cinta superior de aguayo -->
+    <div class="aguayo-bar"></div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 1: PANTALLA DE LOGIN (JWT)           -->
+    <!-- ========================================== -->
+    <section id="vistaLogin" class="login-wrapper">
+        <div class="card login-card">
+            <span class="badge-frecuencia">Ahorro Rotativo</span>
+            <h1 class="login-title">Pasanaku Digital</h1>
+            <p class="subtitle">Inicia sesión para gestionar tus grupos y aportes</p>
+
+            <div id="alertaLogin" class="alerta error oculto"></div>
+
+            <form id="formLogin" onsubmit="iniciarSesion(event)">
+                <div class="form-group">
+                    <label for="loginCorreo">Correo electrónico</label>
+                    <input type="email" id="loginCorreo" required placeholder="valeria@pasanaku.bo" value="valeria@pasanaku.bo">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••" value="123456">
+                </div>
+                <button type="submit" class="btn-pagar btn-large">Ingresar al Pasanaku</button>
+            </form>
+
+            <div class="login-hint">
+                <small>Cuenta de prueba precargada: <strong>valeria@pasanaku.bo</strong> | Clave: <strong>123456</strong></small>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VISTA 2: DASHBOARD PRINCIPAL               -->
+    <!-- ========================================== -->
+    <div id="vistaDashboard" class="oculto">
+        <!-- Barra de usuario y controles globales -->
+        <nav class="top-nav">
+            <div class="container nav-flex">
+                <div class="user-Chip">
+                    <span>Sesión activa: <strong id="nombreUsuarioActivo">Usuario</strong></span>
+                </div>
+                <div class="nav-actions">
+                    <select id="selectorGrupo" class="select-grupo" onchange="cambiarGrupoSeleccionado()"></select>
+                    <button class="btn-outline" onclick="abrirModalUsuario()">+ Nuevo Participante</button>
+                    <button class="btn-aguayo-sm" onclick="abrirModalGrupo()">+ Crear Pasanaku</button>
+                    <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+                </div>
+            </div>
+        </nav>
+
+        <header class="main-header">
+            <div class="container header-flex">
+                <div>
+                    <span class="badge-frecuencia" id="frecuenciaGrupo">Cargando...</span>
+                    <h1 id="nombreGrupo">Pasanaku Digital</h1>
+                    <p class="subtitle">Inicio del ciclo: <span id="fechaInicio">--/--/----</span></p>
+                </div>
+                <div class="estado-wrapper">
+                    <span class="estado-pill" id="estadoGrupo">Activo</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div id="alertaMensaje" class="alerta oculto"></div>
+
+            <!-- Indicadores Financieros -->
+            <section class="metrics-row">
+                <article class="card metric-card">
+                    <span class="metric-label">Turno / Ciclo Actual</span>
+                    <strong class="metric-value" id="cicloActual">#0 de 0</strong>
+                    <span class="metric-note">Rotación en curso</span>
+                </article>
+
+                <article class="card metric-card">
+                    <span class="metric-label">Cuota por Participante</span>
+                    <strong class="metric-value" id="montoCuota">Bs. 0.00</strong>
+                    <span class="metric-note">Aporte individual fijo</span>
+                </article>
+
+                <article class="card metric-card highlight-emerald">
+                    <span class="metric-label">Pozo Total a Entregar</span>
+                    <strong class="metric-value" id="pozoTotal">Bs. 0.00</strong>
+                    <span class="metric-note" id="progresoRecaudacion">Recaudado: Bs. 0.00</span>
+                </article>
+            </section>
+
+            <!-- Receptor del Turno Actual -->
+            <section class="card receptor-banner" id="receptorCard">
+                <div class="receptor-info">
+                    <span class="tag-turno">RECEPTOR DEL POZO EN ESTE TURNO</span>
+                    <h2 id="nombreReceptor">Cargando receptor...</h2>
+                    <p id="detalleReceptor">Teléfono: -- | Turno #--</p>
+                    <div class="barra-progreso-contenedor">
+                        <div class="barra-progreso-relleno" id="barraProgreso"></div>
+                    </div>
+                </div>
+                <div class="receptor-acciones">
+                    <button id="btnAvanzarTurno" class="btn-aguayo" onclick="entregarPozoYAvanzar()">
+                        Entregar Pozo y Cerrar Turno
+                    </button>
+                </div>
+            </section>
+
+            <!-- Tarjetas de Participantes -->
+            <section class="miembros-section">
+                <div class="section-header">
+                    <h3>Estado de Aportes del Turno Actual</h3>
+                    <span id="contadorPagos" class="contador-pagos">0/0 Pagados</span>
+                </div>
+
+                <div id="listaMiembros" class="miembros-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: REGISTRAR NUEVO PARTICIPANTE      -->
+    <!-- ========================================== -->
+    <div id="modalUsuario" class="modal-backdrop oculto">
+        <div class="card modal-card">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Participante</h3>
+                <button class="btn-close" onclick="cerrarModales()">&times;</button>
+            </div>
+            <form id="formNuevoUsuario" onsubmit="guardarNuevoUsuario(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="usuNombre" required placeholder="Ej. Mariana">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" id="usuApellido" required placeholder="Ej. Soliz">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono / Celular</label>
+                        <input type="text" id="usuTelefono" required placeholder="Ej. 70755443">
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="usuCorreo" required placeholder="mariana@correo.bo">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña de acceso</label>
+                    <input type="password" id="usuPassword" required value="123456">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="cerrarModales()">Cancelar</button>
+                    <button type="submit" class="btn-pagar">Guardar Participante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: CREAR NUEVO PASANAKU Y TURNOS     -->
+    <!-- ========================================== -->
+    <div id="modalGrupo" class="modal-backdrop oculto">
+        <div class="card modal-card modal-large">
+            <div class="modal-header">
+                <h3>Crear Nuevo Grupo de Pasanaku</h3>
+                <button class="btn-close" onclick="cerrarModales()">&times;</button>
+            </div>
+            <form id="formNuevoGrupo" onsubmit="guardarNuevoGrupo(event)">
+                <div class="form-group">
+                    <label>Nombre del Pasanaku</label>
+                    <input type="text" id="grpNombre" required placeholder="Ej. Pasanaku Familiar Navideño">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Monto de Cuota (Bs.)</label>
+                        <input type="number" id="grpMonto" step="0.01" min="10" required placeholder="Ej. 200">
+                    </div>
+                    <div class="form-group">
+                        <label>Frecuencia</label>
+                        <select id="grpFrecuencia" required>
+                            <option value="Semanal">Semanal</option>
+                            <option value="Quincenal">Quincenal</option>
+                            <option value="Mensual">Mensual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Inicio</label>
+                        <input type="date" id="grpFecha" required>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="turnos-builder">
+                    <div>
+                        <label>1. Selecciona participantes para agregar al grupo:</label>
+                        <div class="add-member-bar">
+                            <select id="selectUsuarioDisponible"></select>
+                            <button type="button" class="btn-outline" onclick="agregarParticipanteATurno()">+ Asignar Turno</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <label>2. Orden de Turnos de Cobro (Turno #1, #2, #3...):</label>
+                        <ul id="listaTurnosAsignados" class="turnos-list"></ul>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="cerrarModales()">Cancelar</button>
+                    <button type="submit" class="btn-aguayo">Crear Pasanaku Oficial</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
